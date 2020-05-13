@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">Demo ListView Plan</string>
+    <string name="txt_btnAdd">Add</string>
+    <string name="txt_btnRemove">Remove</string>
+</resources>
