@@ -9,7 +9,7 @@ import android.widget.EditText;
 
 public class AddWorkActivity extends AppCompatActivity {
 
-    private EditText EditTextHour, EditTextWork;
+    private EditText EditTextHour, EditTextWork, EditTextLocation;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -18,6 +18,7 @@ public class AddWorkActivity extends AppCompatActivity {
 
         EditTextHour = (EditText)findViewById(R.id.editTextHour);
         EditTextWork = (EditText)findViewById(R.id.editTextTitle);
+        EditTextLocation = (EditText)findViewById(R.id.editTextLocation);
     }
 
 
@@ -30,6 +31,7 @@ public class AddWorkActivity extends AppCompatActivity {
         Intent data = new Intent();
         data.putExtra("hour", EditTextHour.getText().toString());
         data.putExtra("work", EditTextWork.getText().toString());
+        data.putExtra("location", EditTextLocation.getText().toString());
         setResult(RESULT_OK, data);
         super.finish();
     }

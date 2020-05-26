@@ -2,8 +2,9 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/work_layout"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
+    android:layout_height="wrap_content"
     android:orientation="horizontal"
     android:background="@drawable/shape_list_work_element">
     <TextView
@@ -14,7 +15,7 @@
         android:layout_marginBottom="10dp"
         android:textStyle="bold"
         android:textSize="20sp"
-        android:textColor="@color/colorPrimaryDark"
+        android:textColor="@color/colorTextElement"
         android:background="@drawable/custom_hour_border"
         android:gravity="center_vertical"
         android:textAppearance="?android:attr/textAppearanceMedium"/>
@@ -25,7 +26,7 @@
         android:orientation="vertical">
         <TextView
             android:id="@+id/titleWork"
-            android:textColor="@color/colorPrimaryDark"
+            android:textColor="@color/colorTextElement"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Medium Text"
@@ -33,6 +34,33 @@
             android:textAppearance="?android:attr/textAppearanceMedium"
             android:layout_marginLeft="10dp"
             android:layout_marginTop="20dp"/>
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="10dp"
+                android:layout_marginTop="10dp"
+                android:text="địa điểm :"
+                android:textAppearance="?android:attr/textAppearanceMedium"
+                android:textColor="@color/colorTextElement"
+                android:textStyle="bold"
+                />
+
+            <TextView
+                android:id="@+id/location"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="10dp"
+                android:layout_marginTop="10dp"
+                android:text="Medium Text"
+                android:textAppearance="?android:attr/textAppearanceMedium"
+                android:textColor="@color/colorTextElement"
+                android:textStyle="bold" />
+        </LinearLayout>
     </LinearLayout>
     
 </LinearLayout>

@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Demo ListView Plan</string>
+    <string name="app_name">Personal Assistant</string>
     <string name="txt_btnAdd">Add</string>
     <string name="txt_btnRemove">Remove</string>
 

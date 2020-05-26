@@ -2,22 +2,20 @@ package android.example.demolistviewplan;
 
 import android.app.DatePickerDialog;
 import android.app.Dialog;
+import android.icu.text.UnicodeSetSpanner;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.DialogFragment;
 
 import android.widget.DatePicker;
+import android.widget.Toast;
 
 import java.util.Calendar;
 
 public class datePicker extends DialogFragment implements DatePickerDialog.OnDateSetListener {
 
-    @Override
-    public void onDateSet(DatePicker view, int year, int month, int day) {
-        MainActivity activity = (MainActivity) getActivity();
-        activity.processDatePickerResult(year, month, day);
-    }
+
 
     @NonNull
     @Override
@@ -31,5 +29,19 @@ public class datePicker extends DialogFragment implements DatePickerDialog.OnDat
 
         // Create a new instance of DatePickerDialog and return it.
         return new DatePickerDialog(getActivity(), this, year, month, day);
+    }
+
+    @Override
+    public void onDateSet(DatePicker view, int year, int month, int day) {
+        MainActivity activity = (MainActivity) getActivity();
+        activity.processDatePickerResult(year, month, day);
+        activity.setWorksToDay();
+    }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        MainActivity activity = (MainActivity) getActivity();
+        activity.setWorksToDay();
     }
 }
