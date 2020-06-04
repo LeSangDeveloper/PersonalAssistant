@@ -13,12 +13,13 @@ public class WorksSQLiteHelper extends SQLiteOpenHelper {
         public static final String COLUMN_DATE = "date";
         public static final String COLUMN_TIME = "time";
         public static final String COLUMN_LOCATION = "location";
+        public static final String COLUMN_NOTIFICATION = "notification";
 
         private static final String DATABASE_NAME = "work.db";
         private static final int DATABASE_VERSION = 1;
 
         private static final String DATABASE_CREATE = "create table " + TABLE_WORK + " ( " + COLUMN_ID + " integer primary key autoincrement, " +
-                COLUMN_TITLE + " text not null, " + COLUMN_DATE + " text not null, " + COLUMN_TIME +" text not null, " + COLUMN_LOCATION + " text not null);";
+                COLUMN_TITLE + " text not null, " + COLUMN_DATE + " text not null, " + COLUMN_TIME +" text not null, " + COLUMN_LOCATION + " text not null, " + COLUMN_NOTIFICATION + " text not null);";
 
         public WorksSQLiteHelper(Context context)
         {

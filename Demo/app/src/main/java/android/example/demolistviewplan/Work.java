@@ -7,15 +7,17 @@ public class Work {
     private String date = null;
     private String time = null;
     private String location = null;
+    private String notification = null;
 
     public Work(){}
 
-    public Work(String title, String date, String time, String location)
+    public Work(String title, String date, String time, String location, String notification)
     {
         this.title = title;
         this.date = date;
         this.time = time;
         this.location = location;
+        this.notification = notification;
     }
 
     public void setId(long id)
@@ -67,5 +69,9 @@ public class Work {
     {
         return this.location;
     }
+
+    public void setNotification(String notification) { this.notification = notification; }
+
+    public String getNotification() {return this.notification; }
 
 }

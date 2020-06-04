@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Trợ lý cá nhân</string>
+    <string name="timeLabel">Thời gian</string>
+    <string name="workLabel">Công việc</string>
+    <string name="destinationLabel">Địa điểm</string>
+    <string name="reminderLabel">Lời nhắc</string>
+    <string name="noneButtonRadio">Không cần thông báo!</string>
+    <string name="fiveRadioButton">Trước 5 phút</string>
+    <string name="thirtyRadioButton">Trước 30 phút</string>
+    <string name="sixtyRadioButton">Trước 60 phút</string>
+    <string name="btnFinishLabel">Hoàn thành</string>
+    <string name="hintEditText">abcxyz</string>
+    <string name="hintEditLAbel">abcxyz</string>
+    <string name="timeDefault">0:00</string>
+</resources>

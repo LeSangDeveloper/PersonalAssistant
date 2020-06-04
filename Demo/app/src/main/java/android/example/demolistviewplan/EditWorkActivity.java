@@ -1,29 +1,22 @@
 package android.example.demolistviewplan;
 
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.fragment.app.DialogFragment;
-
 import android.content.Intent;
 import android.os.Bundle;
-import android.provider.MediaStore;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.RadioButton;
 import android.widget.TextView;
+import android.widget.Toast;
 
-public class AddWorkActivity extends AppCompatActivity {
+import androidx.appcompat.app.AppCompatActivity;
 
+public class EditWorkActivity extends AppCompatActivity {
     private EditText EditTextWork, EditTextLocation;
     private TextView EditTextHour;
     private RadioButton notifyNone, notify5Min, notify30Min, notify60Min;
+    private String time, title, location, notification;
 
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_work_detail);
-
-        assign();
-    }
+    private String id, indexOfWorks, indexOfWorkAdapter;
 
     private void assign()
     {
@@ -35,7 +28,50 @@ public class AddWorkActivity extends AppCompatActivity {
         notify5Min = (RadioButton)findViewById(R.id.notify5Min);
         notify30Min = (RadioButton)findViewById(R.id.notify30Min);
         notify60Min = (RadioButton)findViewById(R.id.notify60Min);
+    }
 
+    private void getAndSet()
+    {
+        Intent intent = getIntent();
+        id = intent.getStringExtra("id");
+
+        time = intent.getStringExtra("time");
+        title = intent.getStringExtra("title");
+        location = intent.getStringExtra("location");
+        notification = intent.getStringExtra("notification");
+        indexOfWorks = intent.getStringExtra("indexOfWorks");
+        indexOfWorkAdapter = intent.getStringExtra("indexOfWorkAdapter");
+
+        EditTextHour.setText(time);
+        EditTextWork.setText(title);
+        EditTextLocation.setText(location);
+        if (notification.contains("none"))
+        {
+            notifyNone.setChecked(true);
+        }
+        else if (notification.contains("5"))
+        {
+            notify5Min.setChecked(true);
+        }
+        else if (notification.contains("30"))
+        {
+            notify30Min.setChecked(true);
+        }
+        else if (notification.contains("60"))
+        {
+            notify60Min.setChecked(true);
+        }
+
+    }
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_work_detail);
+
+        assign();
+
+        getAndSet();
     }
 
     public void btnFinish(View view){
@@ -45,10 +81,13 @@ public class AddWorkActivity extends AppCompatActivity {
     @Override
     public void finish() {
         Intent data = new Intent();
-        data.putExtra("activity", "add");
+        data.putExtra("activity", "edit");
         data.putExtra("hour", EditTextHour.getText().toString());
         data.putExtra("work", EditTextWork.getText().toString());
         data.putExtra("location", EditTextLocation.getText().toString());
+        data.putExtra("id", id);
+        data.putExtra("indexOfWorks", indexOfWorks);
+        data.putExtra("indexOfWorkAdapter", indexOfWorkAdapter);
 
         if (notifyNone.isChecked())
         {

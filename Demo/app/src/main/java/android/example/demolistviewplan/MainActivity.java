@@ -12,6 +12,7 @@ import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import android.app.NotificationManager;
 import android.content.Intent;
 import android.graphics.Canvas;
 import android.graphics.Paint;
@@ -38,34 +39,25 @@ public class MainActivity extends AppCompatActivity {
     private WorksDataSource source;
     private TextView txtDate;
 
+    private NotificationManager mNotificationManager;
+
     GestureDetector gestureDetector;
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    protected void onCreate(Bundle savedInstanceState)
+    {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        txtDate = (TextView)findViewById(R.id.txtDate);
+        assignAndConstruct();
 
-        SimpleDateFormat formatter = new SimpleDateFormat("dd/MM/yyyy");
-        Date date = new Date();
+        setTodayText(savedInstanceState);
 
-        txtDate.setText(formatter.format(date));
-
-        if (savedInstanceState != null)
-        {
-            txtDate.setText(savedInstanceState.getString("txtDate"));
-        }
-
-        source = new WorksDataSource(this);
         source.open();
-
-        workAdapter = new ArrayList<Work>();
-
         works = source.getAllWork();
+
         setWorksToDay();
 
-        listWorks = (RecyclerView)findViewById(R.id.listWorks);
         LinearLayoutManager layoutManager = new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false);
         listWorks.setLayoutManager(layoutManager);
         listWorks.setHasFixedSize(true);
@@ -83,6 +75,27 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+    }
+
+    private void assignAndConstruct()
+    {
+        txtDate = (TextView)findViewById(R.id.txtDate);
+        listWorks = (RecyclerView)findViewById(R.id.listWorks);
+        workAdapter = new ArrayList<Work>();
+        source = new WorksDataSource(this);
+    }
+
+    private void setTodayText(Bundle savedInstanceState)
+    {
+        SimpleDateFormat formatter = new SimpleDateFormat("dd/MM/yyyy");
+        Date date = new Date();
+
+        txtDate.setText(formatter.format(date));
+
+        if (savedInstanceState != null)
+        {
+            txtDate.setText(savedInstanceState.getString("txtDate"));
+        }
     }
 
     @Override
@@ -103,6 +116,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    // gán cho floating button
     public void addWork(View view)
     {
         Intent intent = new Intent(this, AddWorkActivity.class);
@@ -118,29 +132,61 @@ public class MainActivity extends AppCompatActivity {
         String hour = null;
         String title = null;
         String location = null;
+        String notification = null;
+
         if (resultCode == RESULT_OK && requestCode == 9) {
             if (data.hasExtra("hour")) {
                 hour = data.getExtras().getString("hour");
                 title = data.getExtras().getString("work");
                 location = data.getExtras().getString("location");
+                notification = data.getExtras().getString("notification");
 
-                if (!(hour.isEmpty() && title.isEmpty() && location.isEmpty())) {
+                if(data.getExtras().getString("activity").equalsIgnoreCase("add"))
+                {
+                    if (!(hour.isEmpty() && title.isEmpty() && location.isEmpty())) {
+                        if (!notification.equalsIgnoreCase("none"))
+                        {
+                            notification = "before " + notification + " minute";
+                        }
+                        Work temp = new Work(title, txtDate.getText().toString(), hour, location, notification);
+                        int n = workAdapter.size();
 
-                    Work temp = new Work(title, txtDate.getText().toString(), hour, location);
-                    int n = workAdapter.size();
+                        works.add(temp);
 
-                    works.add(temp);
+                        workAdapter.add(n, temp);
+                        adapter.notifyItemInserted(n);
 
-                    workAdapter.add(n, temp);
-                    adapter.notifyItemInserted(n);
+                        source.createWork(title, txtDate.getText().toString(), hour, location, notification);
+                    }
+                }
 
-                    source.createWork(title, txtDate.getText().toString(), hour, location);
+                else
+                {
+                    if (!(hour.isEmpty() && title.isEmpty() && location.isEmpty())) {
+                        String id = data.getStringExtra("id");
+                        String indexOfWorks = data.getStringExtra("indexOfWorks");
+                        String indexOfWorkAdapter = data.getStringExtra("indexOfWorkAdapter");
+
+                        if (!notification.equalsIgnoreCase("none"))
+                        {
+                            notification = "before " + notification + " minute";
+                        }
+
+                        Work temp = new Work(title, txtDate.getText().toString(), hour, location, notification);
+                        temp.setId(Integer.parseInt(id));
+
+                        source.saveWork(temp);
+                        works.remove(Integer.parseInt(indexOfWorks));
+                        works.add(Integer.parseInt(indexOfWorks), temp);
+                        workAdapter.remove(Integer.parseInt(indexOfWorkAdapter));
+                        adapter.notifyItemRemoved(Integer.parseInt(indexOfWorkAdapter));
+                        workAdapter.add(Integer.parseInt(indexOfWorkAdapter), temp);
+                        adapter.notifyItemChanged(Integer.parseInt(indexOfWorkAdapter));
+
+                    }
                 }
             }
         }
-
-        ;
-
     }
 
     public void chooseDate()
@@ -272,8 +318,7 @@ public class MainActivity extends AppCompatActivity {
 
                     if(deleteButtonVisible && editButtonVisible)
                     {
-                        clickDeleteButtonListener(recyclerView, viewHolder, posSwiped);
-                        clickEditButtonListener(recyclerView, viewHolder, posSwiped);
+                        clickSwipedButtonListener(recyclerView, viewHolder, posSwiped);
                     }
 
                     super.onChildDraw(c, recyclerView, viewHolder, dX/1.75f, dY, actionState, isCurrentlyActive);
@@ -284,43 +329,35 @@ public class MainActivity extends AppCompatActivity {
                     return makeMovementFlags(0, ItemTouchHelper.START);
                 }
 
-                private void clickDeleteButtonListener(RecyclerView recyclerView, RecyclerView.ViewHolder viewHolder, int posSwiped)
+                public void clickDeleteButton(int posSwiped)
                 {
-
-                    viewHolder = recyclerView.findViewHolderForAdapterPosition(posSwiped);
-                    View item = null;
-                    if (viewHolder != null)
-                    {
-                        item = viewHolder.itemView;
-                    }
-
-                    if (item != null)
-                    {
-
-                        final float y = item.getY();
-                        final float height = item.getHeight();
-                        final float x = item.getX();
-                        final float width = item.getWidth();
-
-                        recyclerView.setOnTouchListener(new View.OnTouchListener() {
-
-                            @Override
-                            public boolean onTouch(View v, MotionEvent event) {
-                                if(event.getAction() == MotionEvent.ACTION_UP && event.getY() > y && event.getY() < y + height && event.getX() > x + width && !moving)
-                                    if (deleteButtonVisible)
-                                    {
-                                        Toast.makeText(getApplicationContext(), "Delete button", Toast.LENGTH_SHORT).show();
-                                        deleteButtonVisible = false;
-                                        editButtonVisible  = false;
-                                    }
-                                return false;
-                            }
-                        });
-                    }
+                    Work work = workAdapter.get(posSwiped);
+                    source.deleteWork(work);
+                    works.remove(work);
+                    workAdapter.remove(posSwiped);
+                    adapter.notifyItemChanged(posSwiped);
 
                 }
 
-                private void clickEditButtonListener(RecyclerView recyclerView, RecyclerView.ViewHolder viewHolder, int posSwiped)
+                public void clickEditButton(int posSwiped)
+                {
+                    Work work = workAdapter.get(posSwiped);
+
+                    Intent intent = new Intent(getApplicationContext(), EditWorkActivity.class);
+
+                    intent.putExtra("id", String.valueOf(work.getId()));
+                    intent.putExtra("title", work.getTitle());
+                    intent.putExtra("time", work.getTime());
+                    intent.putExtra("location", work.getLocation());
+                    intent.putExtra("notification", work.getNotification());
+                    intent.putExtra("indexOfWorks", String.valueOf(works.indexOf(work)));
+                    intent.putExtra("indexOfWorkAdapter", String.valueOf(workAdapter.indexOf(work)));
+
+                    int REQUEST_CODE = 9;
+                    startActivityForResult(intent, REQUEST_CODE);
+                }
+
+                private void clickSwipedButtonListener(final RecyclerView recyclerView, RecyclerView.ViewHolder viewHolder, final int posSwiped)
                 {
                     viewHolder = recyclerView.findViewHolderForAdapterPosition(posSwiped);
                     View item = null;
@@ -344,12 +381,12 @@ public class MainActivity extends AppCompatActivity {
                                 if(event.getAction() == MotionEvent.ACTION_UP && event.getY() > y && event.getY() < y + height && event.getX() > buttonEditLeft && event.getX() < buttonEditRight && !moving)
                                     if (deleteButtonVisible && editButtonVisible)
                                     {
-                                        Toast.makeText(getApplicationContext(), "Edit button", Toast.LENGTH_SHORT).show();
+                                        clickEditButton(posSwiped);
                                     }
                                 if(event.getAction() == MotionEvent.ACTION_UP && event.getY() > y && event.getY() < y + height && event.getX() > buttonDeleteLeft && event.getX() < buttonDeleteRight && !moving)
                                     if (deleteButtonVisible && editButtonVisible)
                                     {
-                                        Toast.makeText(getApplicationContext(), "Delete button", Toast.LENGTH_SHORT).show();
+                                        clickDeleteButton(posSwiped);
                                     }
                                 return false;
                             }
@@ -387,6 +424,197 @@ public class MainActivity extends AppCompatActivity {
     }
 
     class DateGestureDetector extends GestureDetector.SimpleOnGestureListener {
+
+        void nextDay(int date, int month, int year)
+        {
+            if (year % 400 == 0 || (year % 4 == 0 && year % 100 != 0))
+            {
+                if (month == 2)
+                {
+                    if(date == 29)
+                    {
+                        date = 1;
+                        month = 3;
+                    }
+                    else date += 1;
+                }
+                else if (month == 4 || month == 6 || month == 9 || month == 11)
+                {
+                    if (date == 30)
+                    {
+                        date = 1;
+                        month += 1;
+                    }
+                    else date += 1;
+                }
+                else if (month == 12)
+                {
+                    if (date == 31)
+                    {
+                        date = 1;
+                        month = 1;
+                        year += 1;
+                    }
+                    else
+                        date += 1;
+                }
+                else
+                {
+                    if ( date == 31)
+                    {
+                        date = 1;
+                        month += 1;
+                    }
+                    else date += 1;
+                }
+            }
+            else
+            {
+                if (month == 2)
+                {
+                    if(date == 28)
+                    {
+                        date = 1;
+                        month = 3;
+                    }
+                    else date += 1;
+                }
+                else if (month == 4 || month == 6 || month == 9 || month == 11)
+                {
+                    if (date == 30)
+                    {
+                        date = 1;
+                        month += 1;
+                    }
+                    else date += 1;
+                }
+                else if (month == 12)
+                {
+                    if (date == 31)
+                    {
+                        date = 1;
+                        month = 1;
+                        year += 1;
+                    }
+                    else
+                        date += 1;
+                }
+                else
+                {
+                    if ( date == 31)
+                    {
+                        date += 1;
+                        month += 1;
+                    }
+                    else date += 1;
+                }
+            }
+            processDatePickerResult(year, month - 1, date);
+        }
+
+        void previousDay(int date, int month, int year)
+        {
+            if (year % 400 == 0 || (year % 4 == 0 && year % 100 != 0))
+            {
+                if (month == 3)
+                {
+                    if (date == 1)
+                    {
+                        month = 2;
+                        date = 29;
+                    }
+                    else date -= 1;
+                }
+                else if (month == 8)
+                {
+                    if (date == 1)
+                    {
+                        month = 7;
+                        date = 31;
+                    }
+                    else date -= 1;
+                }
+                else if (month == 1)
+                {
+                    if (date == 1)
+                    {
+                        date = 31;
+                        month = 12;
+                        year -= 1;
+                    }
+                    else date -= 1;
+                }
+                else if (month == 2 || month == 4 || month == 6 || month == 9 || month == 11)
+                {
+                    if (date == 1)
+                    {
+                        date = 31;
+                        month -= 1;
+                    }
+                    else date -= 1;
+                }
+                else
+                {
+                    if (date == 1)
+                    {
+                        date = 30;
+                        month -= 1;
+                    }
+                    else date -= 1;
+                }
+            }
+            else
+            {
+                if (month == 3)
+                {
+                    if (date == 1)
+                    {
+                        month = 2;
+                        date = 28;
+                    }
+                    else date -= 1;
+                }
+                else if (month == 8)
+                {
+                    if (date == 1)
+                    {
+                        month = 7;
+                        date = 31;
+                    }
+                    else date -= 1;
+                }
+                else if (month == 1)
+                {
+                    if (date == 1)
+                    {
+                        date = 31;
+                        month = 12;
+                        year -= 1;
+                    }
+                    else date -= 1;
+                }
+                else if (month == 2 || month == 4 || month == 6 || month == 9 || month == 11)
+                {
+                    if (date == 1)
+                    {
+                        date = 31;
+                        month -= 1;
+                    }
+                    else date -= 1;
+                }
+                else
+                {
+                    if (date == 1)
+                    {
+                        date = 31;
+                        month -= 1;
+                    }
+                    else date -= 1;
+                }
+            }
+            processDatePickerResult(year, month - 1, date);
+        }
+
         @Override
         public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY)
         {
@@ -398,89 +626,8 @@ public class MainActivity extends AppCompatActivity {
                 date = Integer.parseInt(dateSlice[0]);
                 month = Integer.parseInt(dateSlice[1]);
                 year = Integer.parseInt(dateSlice[2]);
-                if (year % 400 == 0 || (year % 4 == 0 && year % 100 != 0))
-                {
-                    if (month == 2)
-                    {
-                        if(date == 29)
-                        {
-                            date = 1;
-                            month = 3;
-                        }
-                        else date += 1;
-                    }
-                    else if (month == 4 || month == 6 || month == 9 || month == 11)
-                    {
-                        if (date == 30)
-                        {
-                            date = 1;
-                            month += 1;
-                        }
-                        else date += 1;
-                    }
-                    else if (month == 12)
-                    {
-                        if (date == 31)
-                        {
-                            date = 1;
-                            month = 1;
-                            year += 1;
-                        }
-                        else
-                            date += 1;
-                    }
-                    else
-                    {
-                        if ( date == 31)
-                        {
-                            date = 1;
-                            month += 1;
-                        }
-                        else date += 1;
-                    }
-                }
-                else
-                {
-                    if (month == 2)
-                    {
-                        if(date == 28)
-                        {
-                            date = 1;
-                            month = 3;
-                        }
-                        else date += 1;
-                    }
-                    else if (month == 4 || month == 6 || month == 9 || month == 11)
-                    {
-                        if (date == 30)
-                        {
-                            date = 1;
-                            month += 1;
-                        }
-                        else date += 1;
-                    }
-                    else if (month == 12)
-                    {
-                        if (date == 31)
-                        {
-                            date = 1;
-                            month = 1;
-                            year += 1;
-                        }
-                        else
-                            date += 1;
-                    }
-                    else
-                    {
-                        if ( date == 31)
-                        {
-                            date += 1;
-                            month += 1;
-                        }
-                        else date += 1;
-                    }
-                }
-                processDatePickerResult(year, month - 1, date);
+                nextDay(date, month, year);
+
             }
             if (e2.getX() - e1.getX() > 50)
             {
@@ -488,105 +635,7 @@ public class MainActivity extends AppCompatActivity {
                 date = Integer.parseInt(dateSlice[0]);
                 month = Integer.parseInt(dateSlice[1]);
                 year = Integer.parseInt(dateSlice[2]);
-                if (year % 400 == 0 || (year % 4 == 0 && year % 100 != 0))
-                {
-                    if (month == 3)
-                    {
-                        if (date == 1)
-                        {
-                            month = 2;
-                            date = 29;
-                        }
-                        else date -= 1;
-                    }
-                    else if (month == 8)
-                    {
-                        if (date == 1)
-                        {
-                            month = 7;
-                            date = 31;
-                        }
-                        else date -= 1;
-                    }
-                    else if (month == 1)
-                    {
-                        if (date == 1)
-                        {
-                            date = 31;
-                            month = 12;
-                            year -= 1;
-                        }
-                        else date -= 1;
-                    }
-                    else if (month == 2 || month == 4 || month == 6 || month == 9 || month == 11)
-                    {
-                        if (date == 1)
-                        {
-                            date = 31;
-                            month -= 1;
-                        }
-                        else date -= 1;
-                    }
-                    else
-                    {
-                        if (date == 1)
-                        {
-                            date = 30;
-                            month -= 1;
-                        }
-                        else date -= 1;
-                    }
-                }
-                else
-                {
-                    if (month == 3)
-                    {
-                        if (date == 1)
-                        {
-                            month = 2;
-                            date = 28;
-                        }
-                        else date -= 1;
-                    }
-                    else if (month == 8)
-                    {
-                        if (date == 1)
-                        {
-                            month = 7;
-                            date = 31;
-                        }
-                        else date -= 1;
-                    }
-                    else if (month == 1)
-                    {
-                        if (date == 1)
-                        {
-                            date = 31;
-                            month = 12;
-                            year -= 1;
-                        }
-                        else date -= 1;
-                    }
-                    else if (month == 2 || month == 4 || month == 6 || month == 9 || month == 11)
-                    {
-                        if (date == 1)
-                        {
-                            date = 31;
-                            month -= 1;
-                        }
-                        else date -= 1;
-                    }
-                    else
-                    {
-                        if (date == 1)
-                        {
-                            date = 31;
-                            month -= 1;
-                        }
-                        else date -= 1;
-                    }
-                }
-                processDatePickerResult(year, month - 1, date);
+                previousDay(date, month, year);
             }
 
             setWorksToDay();
