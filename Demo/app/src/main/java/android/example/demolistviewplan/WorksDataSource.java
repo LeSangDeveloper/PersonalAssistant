@@ -48,11 +48,10 @@ public class WorksDataSource {
     public void deleteWork(Work w)
     {
         long id = w.getId();
-
         db.delete(WorksSQLiteHelper.TABLE_WORK, WorksSQLiteHelper.COLUMN_ID + " = " + id, null);
     }
 
-    public void saveWork(Work w)
+    public Work saveWork(Work w)
     {
         long id = w.getId();
         ContentValues contentvalues = new ContentValues();
@@ -62,6 +61,8 @@ public class WorksDataSource {
         contentvalues.put(WorksSQLiteHelper.COLUMN_LOCATION, w.getLocation());
         contentvalues.put(WorksSQLiteHelper.COLUMN_NOTIFICATION, w.getNotification());
         db.update(WorksSQLiteHelper.TABLE_WORK,contentvalues ,WorksSQLiteHelper.COLUMN_ID + " = " + id, null);
+
+        return w;
     }
 
     public List<Work> getAllWork() {

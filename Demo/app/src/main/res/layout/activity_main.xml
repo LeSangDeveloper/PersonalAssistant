@@ -26,7 +26,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="@color/colorPrimaryDark"
-        android:text="22/10/2020"
+        android:letterSpacing="0.05"
         android:textAlignment="center"
         android:textColor="#FFFFFF"
         android:textSize="50sp" />

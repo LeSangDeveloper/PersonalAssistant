@@ -1,6 +1,7 @@
 package android.example.demolistviewplan;
 
 import android.content.Context;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -14,6 +15,8 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import org.w3c.dom.Text;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List;
 
 public class RecyclerViewWorks extends RecyclerView.Adapter<RecyclerViewWorks.WorksViewsHolder> {
@@ -31,8 +34,120 @@ public class RecyclerViewWorks extends RecyclerView.Adapter<RecyclerViewWorks.Wo
     @Override
     public WorksViewsHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         View itemView;
-        itemView = LayoutInflater.from(parent.getContext()).inflate(R.layout.work, parent, false);
+
+        switch (viewType) {
+            case 1:
+                itemView = LayoutInflater.from(parent.getContext()).inflate(R.layout.work, parent, false);
+                break;
+            case 2:
+                itemView = LayoutInflater.from(parent.getContext()).inflate(R.layout.work_finished, parent, false);
+                break;
+            default:
+                itemView = LayoutInflater.from(parent.getContext()).inflate(R.layout.work, parent, false);
+                break;
+        }
         return new WorksViewsHolder(itemView);
+    }
+
+    public String getToday()
+    {
+        SimpleDateFormat formatter = new SimpleDateFormat("dd/MM/yyyy");
+        Date date = new Date();
+        return formatter.format(date);
+    }
+
+    public String getTimeNow()
+    {
+        SimpleDateFormat formatter = new SimpleDateFormat("HH:mm");
+        Date time = new Date();
+        return formatter.format(time);
+    }
+
+    private boolean compareDateWork(String dateNow, String timeNow, Work work)
+    {
+
+        String dateString[] = dateNow.split("/");
+        String timeString[] = timeNow.split(":");
+        int dayNow = Integer.valueOf(dateString[0]);
+        int monthNow = Integer.valueOf(dateString[1]);
+        int yearNow = Integer.valueOf(dateString[2]);
+        int hourNow = Integer.valueOf(timeString[0]);
+        int minuteNow = Integer.valueOf(timeString[1]);
+        Log.e("Date", dayNow + " " + monthNow + " " + yearNow + " " + hourNow + " " + minuteNow);
+
+        String dateWorkString[] = work.getDate().split("/");
+        String timeWorksString[] = work.getTime().split(":");
+        int dayWork = Integer.valueOf(dateWorkString[0]);
+        int monthWork = Integer.valueOf(dateWorkString[1]);
+        int yearWork = Integer.valueOf(dateWorkString[2]);
+        int hourWork = Integer.valueOf(timeWorksString[0]);
+        int minuteWork = Integer.valueOf(timeWorksString[1]);
+        Log.e("Date", dayWork + " " + monthWork + " " + yearWork + " " + hourWork + " " + minuteWork);
+
+        if (yearNow > yearWork)
+        {
+            return false;
+        }
+        else if (yearNow < yearWork)
+        {
+            return true;
+        }
+        else {
+
+            if (monthNow > monthWork)
+            {
+                return false;
+            }
+            else if (monthNow < monthWork)
+            {
+                return true;
+            }
+            else
+            {
+                if (dayNow > dayWork)
+                {
+                    return false;
+                }
+                else if(dayNow < dayWork)
+                {
+                    return true;
+                }
+                else
+                {
+                    if (hourNow > hourWork)
+                    {
+                        return false;
+                    }
+                    else if (hourNow < hourWork)
+                    {
+                        return true;
+                    }
+                    else
+                    {
+                        if (minuteNow <= minuteWork)
+                        {
+                            return true;
+                        }
+                        else
+                            return false;
+                    }
+                }
+            }
+        }
+    }
+
+    @Override
+    public int getItemViewType(int position) {
+        String dateNow = getToday();
+        String timeNow = getTimeNow();
+        Work work = works.get(position);
+
+        if(compareDateWork(dateNow, timeNow, work))
+        {
+            return 1;
+        }
+        else
+            return 2;
     }
 
     @Override

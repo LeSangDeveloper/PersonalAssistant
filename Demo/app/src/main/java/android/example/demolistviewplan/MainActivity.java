@@ -7,18 +7,26 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 
+import androidx.core.app.NotificationCompat;
 import androidx.fragment.app.DialogFragment;
 import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import android.app.AlarmManager;
+import android.app.NotificationChannel;
 import android.app.NotificationManager;
+import android.app.PendingIntent;
+import android.content.Context;
 import android.content.Intent;
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Rect;
 import android.graphics.RectF;
 import android.os.Bundle;
+import android.os.SystemClock;
+import android.renderscript.RenderScript;
 import android.util.Log;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
@@ -40,6 +48,8 @@ public class MainActivity extends AppCompatActivity {
     private TextView txtDate;
 
     private NotificationManager mNotificationManager;
+    private static final String PRIMARY_CHANNEL_ID =
+            "primary_notification_channel";
 
     GestureDetector gestureDetector;
 
@@ -75,6 +85,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        createNotificationChannel();
     }
 
     private void assignAndConstruct()
@@ -83,14 +94,53 @@ public class MainActivity extends AppCompatActivity {
         listWorks = (RecyclerView)findViewById(R.id.listWorks);
         workAdapter = new ArrayList<Work>();
         source = new WorksDataSource(this);
+        mNotificationManager = (NotificationManager)getSystemService(NOTIFICATION_SERVICE);
+    }
+
+    public void createNotificationChannel() {
+
+        // Create a notification manager object.
+        mNotificationManager =
+                (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+
+        // Notification channels are only available in OREO and higher.
+        // So, add a check on SDK version.
+        if (android.os.Build.VERSION.SDK_INT >=
+                android.os.Build.VERSION_CODES.O) {
+
+            // Create the NotificationChannel with all the parameters.
+            NotificationChannel notificationChannel = new NotificationChannel
+                    (PRIMARY_CHANNEL_ID,
+                            getString(R.string.channelTitleDes),
+                            NotificationManager.IMPORTANCE_HIGH);
+
+            notificationChannel.enableLights(true);
+            notificationChannel.setLightColor(Color.RED);
+            notificationChannel.enableVibration(true);
+            notificationChannel.setDescription
+                    (getString(R.string.channelTitleDes));
+            mNotificationManager.createNotificationChannel(notificationChannel);
+        }
+    }
+
+    public String getToday()
+    {
+        SimpleDateFormat formatter = new SimpleDateFormat("dd/MM/yyyy");
+        Date date = new Date();
+        return formatter.format(date);
+    }
+
+    public String getTimeNow()
+    {
+        SimpleDateFormat formatter = new SimpleDateFormat("HH:mm");
+        Date time = new Date();
+        return formatter.format(time);
     }
 
     private void setTodayText(Bundle savedInstanceState)
     {
-        SimpleDateFormat formatter = new SimpleDateFormat("dd/MM/yyyy");
-        Date date = new Date();
-
-        txtDate.setText(formatter.format(date));
+        String dateMessage = getToday();
+        txtDate.setText(dateMessage);
 
         if (savedInstanceState != null)
         {
@@ -125,6 +175,73 @@ public class MainActivity extends AppCompatActivity {
         startActivityForResult(intent, REQUEST_CODE);
     }
 
+    private void setAlarm(int id,String title ,String time, String date, int before)
+    {
+        int countDate = 0, countHour = 0, countMinute = 0;
+        String today = getToday();
+        while (!today.equalsIgnoreCase(date))
+        {
+            String dateString[] = today.split("/");
+            int day = Integer.parseInt(dateString[0]);
+            int month = Integer.parseInt(dateString[1]);
+            int year = Integer.parseInt(dateString[2]);
+            today = nextDay(day, month, year);
+            countDate++;
+        }
+
+        String timeString[] = time.split(":");
+
+        int hour = Integer.valueOf(timeString[0]);
+        int minute = Integer.valueOf(timeString[1]);
+
+        String now = getTimeNow();
+
+        timeString = now.split(":");
+
+        int hourNow = Integer.valueOf(timeString[0]);
+        int minuteNow = Integer.valueOf(timeString[1]);
+
+        if (hour < hourNow)
+        {
+            countHour = hourNow - hour;
+        }
+        else if (hour > hourNow)
+        {
+            countHour = hour - hourNow;
+        }
+
+        if (minute > minuteNow)
+        {
+            countMinute = minute - minuteNow;
+        }
+        else if (minute < minuteNow)
+        {
+            countMinute = minuteNow - minute;
+        }
+
+        int countMiliSec =  ((((countDate * 24 + countHour) * 60 + countMinute - before) * 60) - 30) * 1000;
+
+        Intent notifyIntent = new Intent(this, WorkAlarmReceiver.class);
+        notifyIntent.putExtra("id", String.valueOf(id));
+        notifyIntent.putExtra("time", time);
+        notifyIntent.putExtra("title", title);
+        PendingIntent notifyPendingIntent = PendingIntent.getBroadcast
+                (this, id, notifyIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+
+        AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
+        alarmManager.setExact(AlarmManager.ELAPSED_REALTIME_WAKEUP, SystemClock.elapsedRealtime() + countMiliSec, notifyPendingIntent);
+    }
+
+    private void cancelAlarm(int id)
+    {
+        Intent notifyIntent = new Intent(this, WorkAlarmReceiver.class);
+        PendingIntent notifyPendingIntent = PendingIntent.getBroadcast
+                (this, id, notifyIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+
+        AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
+        alarmManager.cancel(notifyPendingIntent);
+    }
+
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
@@ -133,6 +250,7 @@ public class MainActivity extends AppCompatActivity {
         String title = null;
         String location = null;
         String notification = null;
+        int before = 0;
 
         if (resultCode == RESULT_OK && requestCode == 9) {
             if (data.hasExtra("hour")) {
@@ -146,9 +264,12 @@ public class MainActivity extends AppCompatActivity {
                     if (!(hour.isEmpty() && title.isEmpty() && location.isEmpty())) {
                         if (!notification.equalsIgnoreCase("none"))
                         {
+                            before = Integer.valueOf(notification);
                             notification = "before " + notification + " minute";
                         }
-                        Work temp = new Work(title, txtDate.getText().toString(), hour, location, notification);
+
+                        Work temp = source.createWork(title, txtDate.getText().toString(), hour, location, notification);
+
                         int n = workAdapter.size();
 
                         works.add(temp);
@@ -156,7 +277,8 @@ public class MainActivity extends AppCompatActivity {
                         workAdapter.add(n, temp);
                         adapter.notifyItemInserted(n);
 
-                        source.createWork(title, txtDate.getText().toString(), hour, location, notification);
+                        if (!notification.contains("none"))
+                            setAlarm((int)temp.getId(), title, hour, txtDate.getText().toString(), before);
                     }
                 }
 
@@ -183,6 +305,8 @@ public class MainActivity extends AppCompatActivity {
                         workAdapter.add(Integer.parseInt(indexOfWorkAdapter), temp);
                         adapter.notifyItemChanged(Integer.parseInt(indexOfWorkAdapter));
 
+                        if (!notification.contains("none"))
+                            setAlarm((int)temp.getId(), title, hour, txtDate.getText().toString(), before);
                     }
                 }
             }
@@ -336,7 +460,7 @@ public class MainActivity extends AppCompatActivity {
                     works.remove(work);
                     workAdapter.remove(posSwiped);
                     adapter.notifyItemChanged(posSwiped);
-
+                    cancelAlarm((int)work.getId());
                 }
 
                 public void clickEditButton(int posSwiped)
@@ -354,6 +478,7 @@ public class MainActivity extends AppCompatActivity {
                     intent.putExtra("indexOfWorkAdapter", String.valueOf(workAdapter.indexOf(work)));
 
                     int REQUEST_CODE = 9;
+                    cancelAlarm((int)work.getId());
                     startActivityForResult(intent, REQUEST_CODE);
                 }
 
@@ -396,7 +521,8 @@ public class MainActivity extends AppCompatActivity {
 
             };
 
-    public void processDatePickerResult(int year, int month, int day) {
+    public String convertDateToString(int year, int month, int day)
+    {
         String month_string;
         String day_string;
         String year_string = Integer.toString(year);
@@ -408,7 +534,7 @@ public class MainActivity extends AppCompatActivity {
         {
             day_string = Integer.toString(day);
         }
-        if(month < 10)
+        if(month < 9)
         {
             month_string = "0" + Integer.toString(month + 1);
         }
@@ -417,203 +543,211 @@ public class MainActivity extends AppCompatActivity {
             month_string = Integer.toString(month + 1);
         }
         String dateMessage = ( day_string + "/" + month_string + "/" + year_string);
+        return dateMessage;
+    }
 
+    public void processDatePickerResult(String dateString) {
+        String [] dateSlice = dateString.split("/");
+        int date = Integer.parseInt(dateSlice[0]);
+        int month = Integer.parseInt(dateSlice[1]);
+        int year = Integer.parseInt(dateSlice[2]);
+        String dateMessage = convertDateToString(year, month - 2, date);
         txtDate.setText(dateMessage);
         setWorksToDay();
         adapter.notifyDataSetChanged();
     }
 
+    String nextDay(int date, int month, int year)
+    {
+        if (year % 400 == 0 || (year % 4 == 0 && year % 100 != 0))
+        {
+            if (month == 2)
+            {
+                if(date == 29)
+                {
+                    date = 1;
+                    month = 3;
+                }
+                else date += 1;
+            }
+            else if (month == 4 || month == 6 || month == 9 || month == 11)
+            {
+                if (date == 30)
+                {
+                    date = 1;
+                    month += 1;
+                }
+                else date += 1;
+            }
+            else if (month == 12)
+            {
+                if (date == 31)
+                {
+                    date = 1;
+                    month = 1;
+                    year += 1;
+                }
+                else
+                    date += 1;
+            }
+            else
+            {
+                if ( date == 31)
+                {
+                    date = 1;
+                    month += 1;
+                }
+                else date += 1;
+            }
+        }
+        else
+        {
+            if (month == 2)
+            {
+                if(date == 28)
+                {
+                    date = 1;
+                    month = 3;
+                }
+                else date += 1;
+            }
+            else if (month == 4 || month == 6 || month == 9 || month == 11)
+            {
+                if (date == 30)
+                {
+                    date = 1;
+                    month += 1;
+                }
+                else date += 1;
+            }
+            else if (month == 12)
+            {
+                if (date == 31)
+                {
+                    date = 1;
+                    month = 1;
+                    year += 1;
+                }
+                else
+                    date += 1;
+            }
+            else
+            {
+                if ( date == 31)
+                {
+                    date += 1;
+                    month += 1;
+                }
+                else date += 1;
+            }
+        }
+        return convertDateToString(year, month, date);
+    }
+
+    String previousDay(int date, int month, int year)
+    {
+        if (year % 400 == 0 || (year % 4 == 0 && year % 100 != 0))
+        {
+            if (month == 3)
+            {
+                if (date == 1)
+                {
+                    month = 2;
+                    date = 29;
+                }
+                else date -= 1;
+            }
+            else if (month == 8)
+            {
+                if (date == 1)
+                {
+                    month = 7;
+                    date = 31;
+                }
+                else date -= 1;
+            }
+            else if (month == 1)
+            {
+                if (date == 1)
+                {
+                    date = 31;
+                    month = 12;
+                    year -= 1;
+                }
+                else date -= 1;
+            }
+            else if (month == 2 || month == 4 || month == 6 || month == 9 || month == 11)
+            {
+                if (date == 1)
+                {
+                    date = 31;
+                    month -= 1;
+                }
+                else date -= 1;
+            }
+            else
+            {
+                if (date == 1)
+                {
+                    date = 30;
+                    month -= 1;
+                }
+                else date -= 1;
+            }
+        }
+        else
+        {
+            if (month == 3)
+            {
+                if (date == 1)
+                {
+                    month = 2;
+                    date = 28;
+                }
+                else date -= 1;
+            }
+            else if (month == 8)
+            {
+                if (date == 1)
+                {
+                    month = 7;
+                    date = 31;
+                }
+                else date -= 1;
+            }
+            else if (month == 1)
+            {
+                if (date == 1)
+                {
+                    date = 31;
+                    month = 12;
+                    year -= 1;
+                }
+                else date -= 1;
+            }
+            else if (month == 2 || month == 4 || month == 6 || month == 9 || month == 11)
+            {
+                if (date == 1)
+                {
+                    date = 31;
+                    month -= 1;
+                }
+                else date -= 1;
+            }
+            else
+            {
+                if (date == 1)
+                {
+                    date = 31;
+                    month -= 1;
+                }
+                else date -= 1;
+            }
+        }
+        return convertDateToString(year, month, date);
+    }
+
     class DateGestureDetector extends GestureDetector.SimpleOnGestureListener {
-
-        void nextDay(int date, int month, int year)
-        {
-            if (year % 400 == 0 || (year % 4 == 0 && year % 100 != 0))
-            {
-                if (month == 2)
-                {
-                    if(date == 29)
-                    {
-                        date = 1;
-                        month = 3;
-                    }
-                    else date += 1;
-                }
-                else if (month == 4 || month == 6 || month == 9 || month == 11)
-                {
-                    if (date == 30)
-                    {
-                        date = 1;
-                        month += 1;
-                    }
-                    else date += 1;
-                }
-                else if (month == 12)
-                {
-                    if (date == 31)
-                    {
-                        date = 1;
-                        month = 1;
-                        year += 1;
-                    }
-                    else
-                        date += 1;
-                }
-                else
-                {
-                    if ( date == 31)
-                    {
-                        date = 1;
-                        month += 1;
-                    }
-                    else date += 1;
-                }
-            }
-            else
-            {
-                if (month == 2)
-                {
-                    if(date == 28)
-                    {
-                        date = 1;
-                        month = 3;
-                    }
-                    else date += 1;
-                }
-                else if (month == 4 || month == 6 || month == 9 || month == 11)
-                {
-                    if (date == 30)
-                    {
-                        date = 1;
-                        month += 1;
-                    }
-                    else date += 1;
-                }
-                else if (month == 12)
-                {
-                    if (date == 31)
-                    {
-                        date = 1;
-                        month = 1;
-                        year += 1;
-                    }
-                    else
-                        date += 1;
-                }
-                else
-                {
-                    if ( date == 31)
-                    {
-                        date += 1;
-                        month += 1;
-                    }
-                    else date += 1;
-                }
-            }
-            processDatePickerResult(year, month - 1, date);
-        }
-
-        void previousDay(int date, int month, int year)
-        {
-            if (year % 400 == 0 || (year % 4 == 0 && year % 100 != 0))
-            {
-                if (month == 3)
-                {
-                    if (date == 1)
-                    {
-                        month = 2;
-                        date = 29;
-                    }
-                    else date -= 1;
-                }
-                else if (month == 8)
-                {
-                    if (date == 1)
-                    {
-                        month = 7;
-                        date = 31;
-                    }
-                    else date -= 1;
-                }
-                else if (month == 1)
-                {
-                    if (date == 1)
-                    {
-                        date = 31;
-                        month = 12;
-                        year -= 1;
-                    }
-                    else date -= 1;
-                }
-                else if (month == 2 || month == 4 || month == 6 || month == 9 || month == 11)
-                {
-                    if (date == 1)
-                    {
-                        date = 31;
-                        month -= 1;
-                    }
-                    else date -= 1;
-                }
-                else
-                {
-                    if (date == 1)
-                    {
-                        date = 30;
-                        month -= 1;
-                    }
-                    else date -= 1;
-                }
-            }
-            else
-            {
-                if (month == 3)
-                {
-                    if (date == 1)
-                    {
-                        month = 2;
-                        date = 28;
-                    }
-                    else date -= 1;
-                }
-                else if (month == 8)
-                {
-                    if (date == 1)
-                    {
-                        month = 7;
-                        date = 31;
-                    }
-                    else date -= 1;
-                }
-                else if (month == 1)
-                {
-                    if (date == 1)
-                    {
-                        date = 31;
-                        month = 12;
-                        year -= 1;
-                    }
-                    else date -= 1;
-                }
-                else if (month == 2 || month == 4 || month == 6 || month == 9 || month == 11)
-                {
-                    if (date == 1)
-                    {
-                        date = 31;
-                        month -= 1;
-                    }
-                    else date -= 1;
-                }
-                else
-                {
-                    if (date == 1)
-                    {
-                        date = 31;
-                        month -= 1;
-                    }
-                    else date -= 1;
-                }
-            }
-            processDatePickerResult(year, month - 1, date);
-        }
 
         @Override
         public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY)
@@ -626,8 +760,7 @@ public class MainActivity extends AppCompatActivity {
                 date = Integer.parseInt(dateSlice[0]);
                 month = Integer.parseInt(dateSlice[1]);
                 year = Integer.parseInt(dateSlice[2]);
-                nextDay(date, month, year);
-
+                processDatePickerResult(nextDay(date, month, year));
             }
             if (e2.getX() - e1.getX() > 50)
             {
@@ -635,7 +768,7 @@ public class MainActivity extends AppCompatActivity {
                 date = Integer.parseInt(dateSlice[0]);
                 month = Integer.parseInt(dateSlice[1]);
                 year = Integer.parseInt(dateSlice[2]);
-                previousDay(date, month, year);
+                processDatePickerResult(previousDay(date, month, year));
             }
 
             setWorksToDay();

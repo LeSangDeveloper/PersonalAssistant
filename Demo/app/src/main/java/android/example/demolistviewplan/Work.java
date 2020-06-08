@@ -13,6 +13,7 @@ public class Work {
 
     public Work(String title, String date, String time, String location, String notification)
     {
+        this.id = id;
         this.title = title;
         this.date = date;
         this.time = time;
