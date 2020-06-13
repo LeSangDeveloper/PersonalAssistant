@@ -168,11 +168,9 @@ public class DateActivity extends AppCompatActivity {
         if (dayOfWeekBegin == 1)
         {
             calendar.add(Calendar.DAY_OF_MONTH, -6);
-            Log.e("start pos " ,String.valueOf(6));
         }
         else {
             calendar.add(Calendar.DAY_OF_MONTH, -monthBeginningCell);
-            Log.e("start pos " ,String.valueOf(monthBeginningCell));
         }
         // fill cells
         while (cells.size() < DAYS_COUNT)
@@ -208,9 +206,7 @@ public class DateActivity extends AppCompatActivity {
                     Date date = calendarAdapter.getItem(position);
 
                     SimpleDateFormat format = new SimpleDateFormat("dd");
-                    dateIntent = format.format(date);
-
-                    Log.e("position ", String.valueOf(position));
+                    dateIntent = format.format(date);;
 
                     int month = convertToMonth(txtDisplayMonth.getText().toString());
 

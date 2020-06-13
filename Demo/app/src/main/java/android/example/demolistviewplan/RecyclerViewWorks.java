@@ -39,7 +39,7 @@ public class RecyclerViewWorks extends RecyclerView.Adapter<RecyclerViewWorks.Wo
             case 1:
                 itemView = LayoutInflater.from(parent.getContext()).inflate(R.layout.work, parent, false);
                 break;
-            case 2:
+            case 0:
                 itemView = LayoutInflater.from(parent.getContext()).inflate(R.layout.work_finished, parent, false);
                 break;
             default:
@@ -49,21 +49,21 @@ public class RecyclerViewWorks extends RecyclerView.Adapter<RecyclerViewWorks.Wo
         return new WorksViewsHolder(itemView);
     }
 
-    public String getToday()
+    public static String getToday()
     {
         SimpleDateFormat formatter = new SimpleDateFormat("dd/MM/yyyy");
         Date date = new Date();
         return formatter.format(date);
     }
 
-    public String getTimeNow()
+    public static String getTimeNow()
     {
         SimpleDateFormat formatter = new SimpleDateFormat("HH:mm");
         Date time = new Date();
         return formatter.format(time);
     }
 
-    private boolean compareDateWork(String dateNow, String timeNow, Work work)
+    public static boolean compareDateWork(String dateNow, String timeNow, Work work)
     {
 
         String dateString[] = dateNow.split("/");
@@ -145,7 +145,7 @@ public class RecyclerViewWorks extends RecyclerView.Adapter<RecyclerViewWorks.Wo
             return 1;
         }
         else
-            return 2;
+            return 0;
     }
 
     @Override

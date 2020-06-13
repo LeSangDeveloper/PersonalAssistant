@@ -243,6 +243,14 @@ public class MainActivity extends AppCompatActivity {
         alarmManager.cancel(notifyPendingIntent);
     }
 
+    private boolean checkWorkTime(Work work)
+    {
+        String stringDate = work.getDate();
+        Log.e("work day ", work.getDate());
+        Log.e("today ", RecyclerViewWorks.getTimeNow().toString() + " / " + RecyclerViewWorks.getToday());
+        return (RecyclerViewWorks.compareDateWork(RecyclerViewWorks.getToday(), RecyclerViewWorks.getTimeNow(), work));
+    }
+
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
@@ -262,28 +270,35 @@ public class MainActivity extends AppCompatActivity {
 
                 if(data.getExtras().getString("activity").equalsIgnoreCase("add"))
                 {
-                    if (!(hour.isEmpty() && title.isEmpty() && location.isEmpty())) {
+                    if (!(hour.isEmpty() && title.isEmpty() && location.isEmpty()))
                         if (!notification.equalsIgnoreCase("none"))
                         {
                             before = Integer.valueOf(notification);
                             notification = "before " + notification + " minute";
                         }
 
-                        Work temp = source.createWork(title, txtDate.getText().toString(), hour, location, notification);
+                        Work temp = new Work(title, txtDate.getText().toString(), hour, location, notification);
 
-                        int n = workAdapter.size();
+                        if (checkWorkTime(temp)) {
+                            source.createWork(title, txtDate.getText().toString(), hour, location, notification);
+                            int n = workAdapter.size();
 
-                        works.add(temp);
+                            works.add(temp);
 
-                        workAdapter.add(n, temp);
-                        adapter.notifyItemInserted(n);
+                            workAdapter.add(n, temp);
+                            adapter.notifyItemInserted(n);
 
-                        if (!notification.contains("none")) {
-                            try {
-                                setAlarm((int) temp.getId(), title, hour, txtDate.getText().toString(), before);
-                            } catch (ParseException e) {
-                                e.printStackTrace();
+                            if (!notification.contains("none")) {
+                                try {
+                                    setAlarm((int) temp.getId(), title, hour, txtDate.getText().toString(), before);
+                                } catch (ParseException e) {
+                                    e.printStackTrace();
+                                }
                             }
+                        }
+                        else
+                        {
+                            Toast.makeText(getApplicationContext(), "Đừng thay đổi những gì đã qua!", Toast.LENGTH_SHORT).show();
                         }
                     }
                 }
@@ -320,7 +335,6 @@ public class MainActivity extends AppCompatActivity {
                         }
                     }
                 }
-            }
 
             Collections.sort(works, Work.workSort);
             Collections.sort(workAdapter, Work.workSort);
@@ -479,32 +493,48 @@ public class MainActivity extends AppCompatActivity {
 
                 public void clickDeleteButton(int posSwiped)
                 {
+
                     Work work = workAdapter.get(posSwiped);
-                    source.deleteWork(work);
-                    works.remove(work);
-                    workAdapter.remove(posSwiped);
-                    adapter.notifyItemChanged(posSwiped);
-                    cancelAlarm((int)work.getId());
-                    setEventsDay();
+
+                    if (checkWorkTime(work)) {
+                        source.deleteWork(work);
+                        works.remove(work);
+                        workAdapter.remove(posSwiped);
+                        adapter.notifyItemChanged(posSwiped);
+                        cancelAlarm((int) work.getId());
+                        setEventsDay();
+                    }
+                    else
+                    {
+                        Toast.makeText(getApplicationContext(), "Đừng thay đổi những gì đã qua!", Toast.LENGTH_SHORT).show();
+                    }
                 }
 
                 public void clickEditButton(int posSwiped)
                 {
                     Work work = workAdapter.get(posSwiped);
 
-                    Intent intent = new Intent(getApplicationContext(), EditWorkActivity.class);
+                    if (checkWorkTime(work)) {
 
-                    intent.putExtra("id", String.valueOf(work.getId()));
-                    intent.putExtra("title", work.getTitle());
-                    intent.putExtra("time", work.getTime());
-                    intent.putExtra("location", work.getLocation());
-                    intent.putExtra("notification", work.getNotification());
-                    intent.putExtra("indexOfWorks", String.valueOf(works.indexOf(work)));
-                    intent.putExtra("indexOfWorkAdapter", String.valueOf(workAdapter.indexOf(work)));
+                        Intent intent = new Intent(getApplicationContext(), EditWorkActivity.class);
 
-                    int REQUEST_CODE = 9;
-                    cancelAlarm((int)work.getId());
-                    startActivityForResult(intent, REQUEST_CODE);
+                        intent.putExtra("id", String.valueOf(work.getId()));
+                        intent.putExtra("title", work.getTitle());
+                        intent.putExtra("time", work.getTime());
+                        intent.putExtra("location", work.getLocation());
+                        intent.putExtra("notification", work.getNotification());
+                        intent.putExtra("indexOfWorks", String.valueOf(works.indexOf(work)));
+                        intent.putExtra("indexOfWorkAdapter", String.valueOf(workAdapter.indexOf(work)));
+
+                        int REQUEST_CODE = 9;
+                        cancelAlarm((int) work.getId());
+                        startActivityForResult(intent, REQUEST_CODE);
+                    }
+                    else
+                    {
+                        Toast.makeText(getApplicationContext(), "Đừng thay đổi những gì đã qua!", Toast.LENGTH_SHORT).show();
+                    }
+
                 }
 
                 private void clickSwipedButtonListener(final RecyclerView recyclerView, RecyclerView.ViewHolder viewHolder, final int posSwiped)
