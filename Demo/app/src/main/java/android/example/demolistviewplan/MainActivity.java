@@ -3,8 +3,11 @@ package android.example.demolistviewplan;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Collections;
 import java.util.Date;
 
 import androidx.core.app.NotificationCompat;
@@ -51,6 +54,8 @@ public class MainActivity extends AppCompatActivity {
     private static final String PRIMARY_CHANNEL_ID =
             "primary_notification_channel";
 
+    public static ArrayList<String> eventDays;
+
     GestureDetector gestureDetector;
 
     @Override
@@ -63,10 +68,16 @@ public class MainActivity extends AppCompatActivity {
 
         setTodayText(savedInstanceState);
 
+        eventDays = new ArrayList<String>();
+
         source.open();
         works = source.getAllWork();
 
         setWorksToDay();
+
+        Collections.sort(works, Work.workSort);
+
+        setEventsDay();
 
         LinearLayoutManager layoutManager = new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false);
         listWorks.setLayoutManager(layoutManager);
@@ -86,6 +97,18 @@ public class MainActivity extends AppCompatActivity {
         });
 
         createNotificationChannel();
+    }
+
+    private void setEventsDay()
+    {
+        eventDays.clear();
+        for (Work work: works)
+        {
+            if (!eventDays.contains(work.getDate()))
+            {
+                eventDays.add(work.getDate());
+            }
+        }
     }
 
     private void assignAndConstruct()
@@ -175,51 +198,28 @@ public class MainActivity extends AppCompatActivity {
         startActivityForResult(intent, REQUEST_CODE);
     }
 
-    private void setAlarm(int id,String title ,String time, String date, int before)
-    {
-        int countDate = 0, countHour = 0, countMinute = 0;
+    private void setAlarm(int id,String title ,String time, String date, int before) throws ParseException {
+        long countDate = 0, countHour = 0, countMinute = 0;
         String today = getToday();
-        while (!today.equalsIgnoreCase(date))
-        {
-            String dateString[] = today.split("/");
-            int day = Integer.parseInt(dateString[0]);
-            int month = Integer.parseInt(dateString[1]);
-            int year = Integer.parseInt(dateString[2]);
-            today = nextDay(day, month, year);
-            countDate++;
-        }
+
+        String dateString[] = date.split("/");
+        int dateEnd = Integer.valueOf(dateString[0]);
+        int monthEnd = Integer.valueOf(dateString[1]);
+        int yearEnd = Integer.valueOf(dateString[2]);
 
         String timeString[] = time.split(":");
 
         int hour = Integer.valueOf(timeString[0]);
         int minute = Integer.valueOf(timeString[1]);
 
-        String now = getTimeNow();
+        Calendar startTime = Calendar.getInstance();
+        Calendar endTime = Calendar.getInstance();
+        endTime.set(yearEnd, monthEnd - 1, dateEnd, hour, minute);
+        long count = endTime.getTimeInMillis() - startTime.getTimeInMillis() - before * 60 * 1000;
 
-        timeString = now.split(":");
-
-        int hourNow = Integer.valueOf(timeString[0]);
-        int minuteNow = Integer.valueOf(timeString[1]);
-
-        if (hour < hourNow)
-        {
-            countHour = hourNow - hour;
-        }
-        else if (hour > hourNow)
-        {
-            countHour = hour - hourNow;
-        }
-
-        if (minute > minuteNow)
-        {
-            countMinute = minute - minuteNow;
-        }
-        else if (minute < minuteNow)
-        {
-            countMinute = minuteNow - minute;
-        }
-
-        int countMiliSec =  ((((countDate * 24 + countHour) * 60 + countMinute - before) * 60) - 30) * 1000;
+        Log.e("Test", String.valueOf(count));
+        Log.e("Start Day", startTime.toString());
+        Log.e("End Day", endTime.toString());
 
         Intent notifyIntent = new Intent(this, WorkAlarmReceiver.class);
         notifyIntent.putExtra("id", String.valueOf(id));
@@ -229,7 +229,8 @@ public class MainActivity extends AppCompatActivity {
                 (this, id, notifyIntent, PendingIntent.FLAG_UPDATE_CURRENT);
 
         AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
-        alarmManager.setExact(AlarmManager.ELAPSED_REALTIME_WAKEUP, SystemClock.elapsedRealtime() + countMiliSec, notifyPendingIntent);
+
+        alarmManager.setExact(AlarmManager.ELAPSED_REALTIME_WAKEUP, SystemClock.elapsedRealtime() + count, notifyPendingIntent);
     }
 
     private void cancelAlarm(int id)
@@ -277,8 +278,13 @@ public class MainActivity extends AppCompatActivity {
                         workAdapter.add(n, temp);
                         adapter.notifyItemInserted(n);
 
-                        if (!notification.contains("none"))
-                            setAlarm((int)temp.getId(), title, hour, txtDate.getText().toString(), before);
+                        if (!notification.contains("none")) {
+                            try {
+                                setAlarm((int) temp.getId(), title, hour, txtDate.getText().toString(), before);
+                            } catch (ParseException e) {
+                                e.printStackTrace();
+                            }
+                        }
                     }
                 }
 
@@ -305,21 +311,39 @@ public class MainActivity extends AppCompatActivity {
                         workAdapter.add(Integer.parseInt(indexOfWorkAdapter), temp);
                         adapter.notifyItemChanged(Integer.parseInt(indexOfWorkAdapter));
 
-                        if (!notification.contains("none"))
-                            setAlarm((int)temp.getId(), title, hour, txtDate.getText().toString(), before);
+                        if (!notification.contains("none")) {
+                            try {
+                                setAlarm((int)temp.getId(), title, hour, txtDate.getText().toString(), before);
+                            } catch (ParseException e) {
+                                e.printStackTrace();
+                            }
+                        }
                     }
                 }
             }
+
+            Collections.sort(works, Work.workSort);
+            Collections.sort(workAdapter, Work.workSort);
+            adapter.notifyDataSetChanged();
+            setEventsDay();
         }
-    }
 
-    public void chooseDate()
-    {
+        if (resultCode == RESULT_OK && requestCode == 10)
+        {
 
-        DialogFragment dateFragment = new datePicker();
-        workAdapter.clear();
-        adapter.notifyDataSetChanged();
-        dateFragment.show(getSupportFragmentManager(), "datePicker");
+            String date, month, year;
+            date = data.getStringExtra("date");
+            month = data.getStringExtra("month");
+            year = data.getStringExtra("year");
+
+            if (date != null && month != null && year != null) {
+                processDatePickerResult(date + "/" + month + "/" + year);
+                Collections.sort(works, Work.workSort);
+                Collections.sort(workAdapter, Work.workSort);
+                adapter.notifyDataSetChanged();
+                setWorksToDay();
+            }
+        }
     }
 
     final ItemTouchHelper.SimpleCallback itemTouchHelperCallback =
@@ -461,6 +485,7 @@ public class MainActivity extends AppCompatActivity {
                     workAdapter.remove(posSwiped);
                     adapter.notifyItemChanged(posSwiped);
                     cancelAlarm((int)work.getId());
+                    setEventsDay();
                 }
 
                 public void clickEditButton(int posSwiped)
@@ -786,8 +811,14 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public boolean onSingleTapUp(MotionEvent e)
         {
-            chooseDate();
-            adapter.notifyDataSetChanged();
+            Intent intent = new Intent(getApplicationContext(), DateActivity.class);
+
+            int REQUEST_CODE = 10;
+            String dateSplit[] = txtDate.getText().toString().split("/");
+            intent.putExtra("date",dateSplit[0]);
+            intent.putExtra("month",dateSplit[1]);
+            intent.putExtra("year",dateSplit[2]);
+            startActivityForResult(intent, REQUEST_CODE);
             return super.onSingleTapUp(e);
         }
     }

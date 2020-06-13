@@ -1,5 +1,7 @@
 package android.example.demolistviewplan;
 
+import java.util.Comparator;
+
 public class Work {
 
     private long id;
@@ -74,5 +76,37 @@ public class Work {
     public void setNotification(String notification) { this.notification = notification; }
 
     public String getNotification() {return this.notification; }
+
+    public static Comparator<Work> workSort = new Comparator<Work>() {
+        @Override
+        public int compare(Work o1, Work o2) {
+            int hour1, hour2, minute1, minute2;
+            String time1[] = o1.getTime().split(":");
+            String time2[] = o2.getTime().split(":");
+
+            hour1 = Integer.parseInt(time1[0]);
+            minute1 = Integer.parseInt(time1[1]);
+            hour2 = Integer.parseInt(time2[0]);
+            minute2 = Integer.parseInt(time2[1]);
+
+            if (hour1 > hour2)
+            {
+                return 1;
+            }
+            else if (hour1 < hour2)
+            {
+                return -1;
+            }
+            else
+            {
+                if (minute1 > minute2)
+                    return 1;
+                else if (minute1 < minute2)
+                    return -1;
+                else
+                    return 0;
+            }
+        }
+    };
 
 }

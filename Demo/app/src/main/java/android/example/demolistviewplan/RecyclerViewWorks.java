@@ -73,7 +73,6 @@ public class RecyclerViewWorks extends RecyclerView.Adapter<RecyclerViewWorks.Wo
         int yearNow = Integer.valueOf(dateString[2]);
         int hourNow = Integer.valueOf(timeString[0]);
         int minuteNow = Integer.valueOf(timeString[1]);
-        Log.e("Date", dayNow + " " + monthNow + " " + yearNow + " " + hourNow + " " + minuteNow);
 
         String dateWorkString[] = work.getDate().split("/");
         String timeWorksString[] = work.getTime().split(":");
@@ -82,7 +81,6 @@ public class RecyclerViewWorks extends RecyclerView.Adapter<RecyclerViewWorks.Wo
         int yearWork = Integer.valueOf(dateWorkString[2]);
         int hourWork = Integer.valueOf(timeWorksString[0]);
         int minuteWork = Integer.valueOf(timeWorksString[1]);
-        Log.e("Date", dayWork + " " + monthWork + " " + yearWork + " " + hourWork + " " + minuteWork);
 
         if (yearNow > yearWork)
         {

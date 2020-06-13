@@ -1,11 +1,14 @@
 package android.example.demolistviewplan;
 
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.DialogFragment;
 
 import android.content.Intent;
 import android.os.Bundle;
 import android.provider.MediaStore;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.RadioButton;
@@ -18,9 +21,24 @@ public class AddWorkActivity extends AppCompatActivity {
     private RadioButton notifyNone, notify5Min, notify30Min, notify60Min;
 
     @Override
+    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+        int id = item.getItemId();
+        switch (id)
+        {
+            case android.R.id.home:
+                this.finish();
+                return true;
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
+    @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_work_detail);
+
+        ActionBar actionBar =  getSupportActionBar();
+        actionBar.setDisplayHomeAsUpEnabled(true);
 
         assign();
     }
@@ -41,6 +59,7 @@ public class AddWorkActivity extends AppCompatActivity {
     public void btnFinish(View view){
         finish();
     }
+
 
     @Override
     public void finish() {

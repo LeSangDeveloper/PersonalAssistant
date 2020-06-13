@@ -14,4 +14,17 @@
     <string name="hintEditLAbel">abcxyz</string>
     <string name="timeDefault">0:00</string>
     <string name="channelTitleDes">Works of Today</string>
+    <string name="January">tháng 1</string>
+    <string name="February">tháng 2</string>
+    <string name="March">tháng 3</string>
+    <string name="April">tháng 4</string>
+    <string name="May">tháng 5</string>
+    <string name="June">tháng 6</string>
+    <string name="July">tháng 7</string>
+    <string name="August">tháng 8</string>
+    <string name="Septemper">tháng 9</string>
+    <string name="October">tháng 10</string>
+    <string name="November">tháng 11</string>
+    <string name="December">tháng 12</string>
+
 </resources>
