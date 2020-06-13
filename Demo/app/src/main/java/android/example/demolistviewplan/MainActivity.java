@@ -262,61 +262,55 @@ public class MainActivity extends AppCompatActivity {
         int before = 0;
 
         if (resultCode == RESULT_OK && requestCode == 9) {
-            if (data.hasExtra("hour")) {
-                hour = data.getExtras().getString("hour");
-                title = data.getExtras().getString("work");
-                location = data.getExtras().getString("location");
-                notification = data.getExtras().getString("notification");
 
-                if(data.getExtras().getString("activity").equalsIgnoreCase("add"))
-                {
+            hour = data.getExtras().getString("hour");
+            title = data.getExtras().getString("work");
+            location = data.getExtras().getString("location");
+            notification = data.getExtras().getString("notification");
+
+            if (data.hasExtra("hour")) {
+                if (data.getExtras().getString("activity").equalsIgnoreCase("add")) {
                     if (!(hour.isEmpty() && title.isEmpty() && location.isEmpty()))
-                        if (!notification.equalsIgnoreCase("none"))
-                        {
+                        if (!notification.equalsIgnoreCase("none")) {
                             before = Integer.valueOf(notification);
                             notification = "before " + notification + " minute";
                         }
 
-                        Work temp = new Work(title, txtDate.getText().toString(), hour, location, notification);
+                    Work temp = new Work(title, txtDate.getText().toString(), hour, location, notification);
 
-                        if (checkWorkTime(temp)) {
-                            source.createWork(title, txtDate.getText().toString(), hour, location, notification);
-                            int n = workAdapter.size();
+                    if (checkWorkTime(temp)) {
+                        source.createWork(title, txtDate.getText().toString(), hour, location, notification);
+                        int n = workAdapter.size();
 
-                            works.add(temp);
+                        works.add(temp);
 
-                            workAdapter.add(n, temp);
-                            adapter.notifyItemInserted(n);
+                        workAdapter.add(n, temp);
+                        adapter.notifyItemInserted(n);
 
-                            if (!notification.contains("none")) {
-                                try {
-                                    setAlarm((int) temp.getId(), title, hour, txtDate.getText().toString(), before);
-                                } catch (ParseException e) {
-                                    e.printStackTrace();
-                                }
+                        if (!notification.contains("none")) {
+                            try {
+                                setAlarm((int) temp.getId(), title, hour, txtDate.getText().toString(), before);
+                            } catch (ParseException e) {
+                                e.printStackTrace();
                             }
-                        }
-                        else
-                        {
+                        } else {
                             Toast.makeText(getApplicationContext(), "Đừng thay đổi những gì đã qua!", Toast.LENGTH_SHORT).show();
                         }
                     }
-                }
-
-                else
-                {
+                } else {
                     if (!(hour.isEmpty() && title.isEmpty() && location.isEmpty())) {
                         String id = data.getStringExtra("id");
                         String indexOfWorks = data.getStringExtra("indexOfWorks");
                         String indexOfWorkAdapter = data.getStringExtra("indexOfWorkAdapter");
 
-                        if (!notification.equalsIgnoreCase("none"))
-                        {
+                        if (!notification.equalsIgnoreCase("none")) {
                             notification = "before " + notification + " minute";
                         }
 
                         Work temp = new Work(title, txtDate.getText().toString(), hour, location, notification);
                         temp.setId(Integer.parseInt(id));
+
+                        Log.e("title hour", title + " / " + "hour");
 
                         source.saveWork(temp);
                         works.remove(Integer.parseInt(indexOfWorks));
@@ -328,7 +322,7 @@ public class MainActivity extends AppCompatActivity {
 
                         if (!notification.contains("none")) {
                             try {
-                                setAlarm((int)temp.getId(), title, hour, txtDate.getText().toString(), before);
+                                setAlarm((int) temp.getId(), title, hour, txtDate.getText().toString(), before);
                             } catch (ParseException e) {
                                 e.printStackTrace();
                             }
@@ -336,28 +330,28 @@ public class MainActivity extends AppCompatActivity {
                     }
                 }
 
-            Collections.sort(works, Work.workSort);
-            Collections.sort(workAdapter, Work.workSort);
-            adapter.notifyDataSetChanged();
-            setEventsDay();
-        }
-
-        if (resultCode == RESULT_OK && requestCode == 10)
-        {
-
-            String date, month, year;
-            date = data.getStringExtra("date");
-            month = data.getStringExtra("month");
-            year = data.getStringExtra("year");
-
-            if (date != null && month != null && year != null) {
-                processDatePickerResult(date + "/" + month + "/" + year);
                 Collections.sort(works, Work.workSort);
                 Collections.sort(workAdapter, Work.workSort);
                 adapter.notifyDataSetChanged();
-                setWorksToDay();
+                setEventsDay();
             }
         }
+
+            if (resultCode == RESULT_OK && requestCode == 10) {
+
+                String date, month, year;
+                date = data.getStringExtra("date");
+                month = data.getStringExtra("month");
+                year = data.getStringExtra("year");
+
+                if (date != null && month != null && year != null) {
+                    processDatePickerResult(date + "/" + month + "/" + year);
+                    Collections.sort(works, Work.workSort);
+                    Collections.sort(workAdapter, Work.workSort);
+                    adapter.notifyDataSetChanged();
+                    setWorksToDay();
+                }
+            }
     }
 
     final ItemTouchHelper.SimpleCallback itemTouchHelperCallback =

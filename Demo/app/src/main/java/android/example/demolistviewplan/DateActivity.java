@@ -184,8 +184,6 @@ public class DateActivity extends AppCompatActivity {
                 endPos = cells.size() - 1;
                 currentMonth++;
             }
-
-            Log.e("endPos ", String.valueOf(endPos));
         }
 
 
@@ -206,7 +204,7 @@ public class DateActivity extends AppCompatActivity {
                     Date date = calendarAdapter.getItem(position);
 
                     SimpleDateFormat format = new SimpleDateFormat("dd");
-                    dateIntent = format.format(date);;
+                    dateIntent = format.format(date);
 
                     int month = convertToMonth(txtDisplayMonth.getText().toString());
 
