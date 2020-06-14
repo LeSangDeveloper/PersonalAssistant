@@ -52,11 +52,23 @@
         android:layout_height="wrap_content"
         android:layout_alignParentStart="true"
         android:layout_alignParentTop="true"
-        android:layout_marginStart="70dp"
+        android:layout_marginStart="120dp"
         android:layout_marginTop="468dp"
-        android:text="1/ Application's name"
+        android:text="2/ Datebar"
         android:textColor="@color/colorWhite"
         android:textSize="26sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentTop="true"
+        android:layout_marginStart="0dp"
+        android:layout_marginTop="500dp"
+        android:text="If you want to choose specific day, tap date bar. Swipe right to left move forward day and left to right move previous day."
+        android:textColor="@color/colorWhite"
+        android:textSize="15sp"
         android:textStyle="bold" />
 
     <TextView
