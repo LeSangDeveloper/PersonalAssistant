@@ -1,15 +1,14 @@
 package android.example.demolistviewplan;
 
-import androidx.fragment.app.DialogFragment;
-
 import android.app.Dialog;
+import androidx.fragment.app.DialogFragment;
 import android.app.TimePickerDialog;
+import android.content.Context;
 import android.os.Bundle;
-import android.widget.TimePicker;
 
 import java.util.Calendar;
 
-public class timePicker extends DialogFragment implements TimePickerDialog.OnTimeSetListener {
+public class TimePicker extends DialogFragment implements TimePickerDialog.OnTimeSetListener {
 
     @Override
     public Dialog onCreateDialog(Bundle savedInstanced) {
@@ -21,7 +20,7 @@ public class timePicker extends DialogFragment implements TimePickerDialog.OnTim
     }
 
     @Override
-    public void onTimeSet(TimePicker view, int hourOfDay, int minute) {
+    public void onTimeSet(android.widget.TimePicker view, int hourOfDay, int minute) {
         if (getActivity() instanceof EditWorkActivity)
         {
             EditWorkActivity activity = (EditWorkActivity)getActivity();

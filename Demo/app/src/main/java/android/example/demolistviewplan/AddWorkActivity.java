@@ -92,7 +92,7 @@ public class AddWorkActivity extends AppCompatActivity {
 
     public void chooseTime(View view)
     {
-        androidx.fragment.app.DialogFragment timePicker = new timePicker();
+        androidx.fragment.app.DialogFragment timePicker = new TimePicker();
         timePicker.show(getSupportFragmentManager(), "time picker");
     }
 

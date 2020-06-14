@@ -73,9 +73,9 @@ public class MainActivity extends AppCompatActivity {
         source.open();
         works = source.getAllWork();
 
-        setWorksToDay();
-
         Collections.sort(works, Work.workSort);
+
+        setWorksToDay();
 
         setEventsDay();
 
@@ -153,13 +153,6 @@ public class MainActivity extends AppCompatActivity {
         return formatter.format(date);
     }
 
-    public String getTimeNow()
-    {
-        SimpleDateFormat formatter = new SimpleDateFormat("HH:mm");
-        Date time = new Date();
-        return formatter.format(time);
-    }
-
     private void setTodayText(Bundle savedInstanceState)
     {
         String dateMessage = getToday();
@@ -217,10 +210,6 @@ public class MainActivity extends AppCompatActivity {
         endTime.set(yearEnd, monthEnd - 1, dateEnd, hour, minute);
         long count = endTime.getTimeInMillis() - startTime.getTimeInMillis() - before * 60 * 1000;
 
-        Log.e("Test", String.valueOf(count));
-        Log.e("Start Day", startTime.toString());
-        Log.e("End Day", endTime.toString());
-
         Intent notifyIntent = new Intent(this, WorkAlarmReceiver.class);
         notifyIntent.putExtra("id", String.valueOf(id));
         notifyIntent.putExtra("time", time);
@@ -245,10 +234,12 @@ public class MainActivity extends AppCompatActivity {
 
     private boolean checkWorkTime(Work work)
     {
-        String stringDate = work.getDate();
-        Log.e("work day ", work.getDate());
-        Log.e("today ", RecyclerViewWorks.getTimeNow().toString() + " / " + RecyclerViewWorks.getToday());
-        return (RecyclerViewWorks.compareDateWork(RecyclerViewWorks.getToday(), RecyclerViewWorks.getTimeNow(), work));
+        SimpleDateFormat formatter = new SimpleDateFormat("dd/MM/yyyy");
+        Date date = new Date();
+        String dateString = formatter.format(date);
+        formatter = new SimpleDateFormat("HH:mm");
+        Date time = new Date();
+        return (RecyclerViewWorks.compareDateWork(dateString, formatter.format(time), work));
     }
 
     @Override
@@ -270,36 +261,40 @@ public class MainActivity extends AppCompatActivity {
 
             if (data.hasExtra("hour")) {
                 if (data.getExtras().getString("activity").equalsIgnoreCase("add")) {
-                    if (!(hour.isEmpty() && title.isEmpty() && location.isEmpty()))
+                    if (!(hour.isEmpty() || title.isEmpty() || location.isEmpty())){
+
                         if (!notification.equalsIgnoreCase("none")) {
                             before = Integer.valueOf(notification);
                             notification = "before " + notification + " minute";
                         }
 
-                    Work temp = new Work(title, txtDate.getText().toString(), hour, location, notification);
+                        Work temp = new Work(title, txtDate.getText().toString(), hour, location, notification);
 
-                    if (checkWorkTime(temp)) {
-                        source.createWork(title, txtDate.getText().toString(), hour, location, notification);
-                        int n = workAdapter.size();
+                        if (checkWorkTime(temp)) {
+                            temp = source.createWork(title, txtDate.getText().toString(), hour, location, notification);
+                            int n = workAdapter.size();
 
-                        works.add(temp);
+                            works.add(temp);
 
-                        workAdapter.add(n, temp);
-                        adapter.notifyItemInserted(n);
+                            workAdapter.add(n, temp);
+                            adapter.notifyItemInserted(n);
 
-                        if (!notification.contains("none")) {
-                            try {
-                                setAlarm((int) temp.getId(), title, hour, txtDate.getText().toString(), before);
-                            } catch (ParseException e) {
-                                e.printStackTrace();
+                            if (!notification.contains("none")) {
+                                try {
+                                    setAlarm((int) temp.getId(), title, hour, txtDate.getText().toString(), before);
+                                } catch (ParseException e) {
+                                    e.printStackTrace();
+                                }
                             }
-                        } else {
+
+                        }
+                        else {
                             Toast.makeText(getApplicationContext(), "Đừng thay đổi những gì đã qua!", Toast.LENGTH_SHORT).show();
                         }
                     }
-                } else {
-                    if (!(hour.isEmpty() && title.isEmpty() && location.isEmpty())) {
-                        String id = data.getStringExtra("id");
+                }
+                else {
+                    if (!(hour.isEmpty() || title.isEmpty() || location.isEmpty())) {
                         String indexOfWorks = data.getStringExtra("indexOfWorks");
                         String indexOfWorkAdapter = data.getStringExtra("indexOfWorkAdapter");
 
@@ -307,25 +302,35 @@ public class MainActivity extends AppCompatActivity {
                             notification = "before " + notification + " minute";
                         }
 
+                        String id = data.getStringExtra("id");
+
+                        Log.e("id ", id);
+
                         Work temp = new Work(title, txtDate.getText().toString(), hour, location, notification);
-                        temp.setId(Integer.parseInt(id));
 
-                        Log.e("title hour", title + " / " + "hour");
+                        temp.setId(Long.parseLong(id));
 
-                        source.saveWork(temp);
-                        works.remove(Integer.parseInt(indexOfWorks));
-                        works.add(Integer.parseInt(indexOfWorks), temp);
-                        workAdapter.remove(Integer.parseInt(indexOfWorkAdapter));
-                        adapter.notifyItemRemoved(Integer.parseInt(indexOfWorkAdapter));
-                        workAdapter.add(Integer.parseInt(indexOfWorkAdapter), temp);
-                        adapter.notifyItemChanged(Integer.parseInt(indexOfWorkAdapter));
+                        if (checkWorkTime(temp))
+                        {
+                            source.saveWork(temp);
+                            works.remove(Integer.parseInt(indexOfWorks));
+                            works.add(Integer.parseInt(indexOfWorks), temp);
+                            workAdapter.remove(Integer.parseInt(indexOfWorkAdapter));
+                            adapter.notifyItemRemoved(Integer.parseInt(indexOfWorkAdapter));
+                            workAdapter.add(Integer.parseInt(indexOfWorkAdapter), temp);
+                            adapter.notifyItemChanged(Integer.parseInt(indexOfWorkAdapter));
 
-                        if (!notification.contains("none")) {
-                            try {
-                                setAlarm((int) temp.getId(), title, hour, txtDate.getText().toString(), before);
-                            } catch (ParseException e) {
-                                e.printStackTrace();
+                            if (!notification.contains("none")) {
+                                try {
+                                    setAlarm((int) temp.getId(), title, hour, txtDate.getText().toString(), before);
+                                } catch (ParseException e) {
+                                    e.printStackTrace();
+                                }
                             }
+                        }
+                        else
+                        {
+                            Toast.makeText(getApplicationContext(), "Đừng thay đổi những gì đã qua!", Toast.LENGTH_SHORT).show();
                         }
                     }
                 }
@@ -547,6 +552,8 @@ public class MainActivity extends AppCompatActivity {
                         final float height = item.getHeight();
                         final float x = item.getX();
                         final float width = item.getWidth();
+
+
 
                         recyclerView.setOnTouchListener(new View.OnTouchListener() {
 
