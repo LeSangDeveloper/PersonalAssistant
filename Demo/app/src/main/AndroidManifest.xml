@@ -9,7 +9,10 @@
         android:roundIcon="@mipmap/ic_work"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        <activity android:name=".DateActivity"></activity>
+        <activity android:name=".IntroductionActivity"></activity>
+        <activity android:name=".InstructionActivity" />
+        <activity android:name=".Instruction" />
+        <activity android:name=".DateActivity" />
 
         <receiver
             android:name=".WorkAlarmReceiver"

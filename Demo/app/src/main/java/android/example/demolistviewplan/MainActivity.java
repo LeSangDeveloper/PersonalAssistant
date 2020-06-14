@@ -22,6 +22,7 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
@@ -29,9 +30,13 @@ import android.graphics.Rect;
 import android.graphics.RectF;
 import android.os.Bundle;
 import android.os.SystemClock;
+import android.preference.PreferenceManager;
 import android.renderscript.RenderScript;
 import android.util.Log;
 import android.view.GestureDetector;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.TextView;
@@ -66,6 +71,16 @@ public class MainActivity extends AppCompatActivity {
 
         assignAndConstruct();
 
+        SharedPreferences sharedPreferences =
+                PreferenceManager.getDefaultSharedPreferences(this);
+
+        if (!sharedPreferences.getBoolean(
+                IntroductionActivity.COMPLETED_ONBOARDING_PREF_NAME, false))
+        {
+            Intent intent = new Intent(this, IntroductionActivity.class);
+            startActivity(intent);
+        }
+
         setTodayText(savedInstanceState);
 
         eventDays = new ArrayList<String>();
@@ -97,6 +112,28 @@ public class MainActivity extends AppCompatActivity {
         });
 
         createNotificationChannel();
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        MenuInflater menuInflater = getMenuInflater();
+        menuInflater.inflate(R.menu.main_menu, menu);
+        return super.onCreateOptionsMenu(menu);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+        int id = item.getItemId();
+        switch (id)
+        {
+            case R.id.instruction:
+                Intent intent = new Intent(this, InstructionActivity.class);
+                startActivity(intent);
+                return true;
+            default:
+                return super.onOptionsItemSelected(item);
+        }
+
     }
 
     private void setEventsDay()
